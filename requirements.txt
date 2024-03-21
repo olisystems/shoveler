@@ -1,0 +1,6 @@
+pika
+requests
+python-dotenv
+black
+isort
+bandit
