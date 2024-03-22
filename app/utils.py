@@ -1,4 +1,6 @@
+import json
 import logging
+from datetime import datetime
 
 import pika
 
@@ -35,3 +37,20 @@ def create_queue(queue_name):
 
     except Exception as e:
         logger.error(f"Queue creation failed due to an error: {e}")
+
+
+def add_timestamp_to_payload(payload_str):
+    """
+    Add a timestamp to the payload string.
+    """
+    try:
+        payload = json.loads(payload_str)
+    except json.JSONDecodeError:
+        return payload_str
+
+    updated_payload = {"timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")}
+
+    updated_payload.update(payload)
+
+    updated_payload_str = json.dumps(updated_payload)
+    return updated_payload_str

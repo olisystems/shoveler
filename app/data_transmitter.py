@@ -6,7 +6,7 @@ from requests.exceptions import RequestException
 
 from .config import API_ENDPOINT, API_PASS, API_USER, RMQ_QUEUE_NAME
 from .logger import get_logger
-from .utils import create_rmq_connection
+from .utils import add_timestamp_to_payload, create_rmq_connection
 
 
 class DataTransmitter:
@@ -63,5 +63,5 @@ class DataTransmitter:
         while True:
             data = self.fetch_data()
             if data:
-                self.transmit_data(data)
+                self.transmit_data(add_timestamp_to_payload(data))
             time.sleep(60)

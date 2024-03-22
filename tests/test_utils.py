@@ -1,7 +1,9 @@
+import json
 import unittest
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from app.utils import create_queue, create_rmq_connection
+from app.utils import add_timestamp_to_payload, create_queue, create_rmq_connection
 
 
 class TestUtils(unittest.TestCase):
@@ -25,3 +27,26 @@ class TestUtils(unittest.TestCase):
         channel_mock.queue_declare.assert_called_once_with(
             queue="test_queue", durable=True, arguments={"x-queue-type": "classic"}
         )
+
+
+class TestAddTimestampToPayload(unittest.TestCase):
+
+    def test_add_timestamp_to_payload(self):
+        payload_str = '{"name":"b","type":"INTEGER","c":"RO","text":"","x":"W","value":0}'
+        updated_payload_str = add_timestamp_to_payload(payload_str)
+
+        self.assertTrue(updated_payload_str)
+
+        try:
+            updated_payload = json.loads(updated_payload_str)
+        except json.JSONDecodeError:
+            self.fail("Updated payload string is not valid JSON")
+
+        current_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.assertEqual(updated_payload["timestamp"], current_timestamp)
+
+        expected_payload = json.loads(payload_str)
+
+        del updated_payload["timestamp"]
+
+        self.assertDictEqual(updated_payload, expected_payload)
