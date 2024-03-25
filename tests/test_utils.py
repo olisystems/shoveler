@@ -3,19 +3,34 @@ import unittest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from app.utils import add_timestamp_to_payload, create_queue, create_rmq_connection
+from app.utils import add_timestamp_to_payload, create_queue, create_rmq_connection, pika
 
 
 class TestUtils(unittest.TestCase):
-
-    @patch("app.utils.pika.BlockingConnection")
-    @patch("app.utils.pika.ConnectionParameters")
-    @patch("app.utils.pika.PlainCredentials")
+    @patch("pika.BlockingConnection")
+    @patch("pika.ConnectionParameters")
+    @patch("pika.PlainCredentials")
     def test_create_rmq_connection(self, mock_credentials, mock_parameters, mock_connection):
         connection_mock, channel_mock = create_rmq_connection()
         mock_connection.assert_called_once()
         self.assertIsNotNone(connection_mock)
         self.assertIsNotNone(channel_mock)
+
+    @patch("pika.BlockingConnection")
+    @patch("time.sleep")
+    def test_connection_retry(self, mock_sleep, mock_blocking_connection):
+        mock_blocking_connection.side_effect = [pika.exceptions.AMQPConnectionError] * 5 + [
+            MagicMock()
+        ]
+
+        connection, channel = create_rmq_connection()
+
+        self.assertEqual(mock_blocking_connection.call_count, 6)
+        self.assertEqual(mock_sleep.call_count, 5)
+
+    def test_max_retries_exceeded(self):
+        with self.assertRaises(Exception):
+            create_rmq_connection(retries=10)
 
     @patch("app.utils.create_rmq_connection")
     @patch("app.utils.logger")

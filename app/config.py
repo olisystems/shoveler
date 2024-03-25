@@ -14,3 +14,6 @@ RMQ_VHOST = os.getenv("RMQ_VHOST")
 RMQ_USER = os.getenv("RMQ_USER")
 RMQ_PASS = os.getenv("RMQ_PASS")
 RMQ_QUEUE_NAME = os.getenv("RMQ_QUEUE_NAME")
+
+MAX_RETRIES = 5
+CONNECTION_RETRY_DELAY = 3

@@ -1,27 +1,47 @@
 import json
 import logging
+import time
 from datetime import datetime
 
 import pika
 
-from .config import RMQ_PASS, RMQ_PORT, RMQ_SERVER_IP, RMQ_USER, RMQ_VHOST
+from .config import (
+    CONNECTION_RETRY_DELAY,
+    MAX_RETRIES,
+    RMQ_PASS,
+    RMQ_PORT,
+    RMQ_SERVER_IP,
+    RMQ_USER,
+    RMQ_VHOST,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def create_rmq_connection():
+def create_rmq_connection(retries=0):
     """
     Function to create a connection with the RabbitMQ server.
     """
+
+    if retries > MAX_RETRIES:
+        raise Exception("Maximum number of retries exceeded")
+
     credentials = pika.PlainCredentials(RMQ_USER, RMQ_PASS)
     parameters = pika.ConnectionParameters(
         RMQ_SERVER_IP, RMQ_PORT, RMQ_VHOST, credentials=credentials
     )
 
-    connection = pika.BlockingConnection(parameters)
-    channel = connection.channel()
+    try:
 
-    return connection, channel
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+        return connection, channel
+    except pika.exceptions.AMQPConnectionError:
+        time.sleep(CONNECTION_RETRY_DELAY)
+        return create_rmq_connection(retries + 1)
+
+    except Exception:
+        raise
 
 
 def create_queue(queue_name):
