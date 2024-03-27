@@ -1,0 +1,6 @@
+skips: ['B101', 'B303']
+tests: ['all']
+exclude_dirs:
+  - 'tests'
+targets:
+  - '.'
